@@ -31,12 +31,24 @@ const printImage = image => {
     }
 }
 
+const cup = (x,y) => 
+    process.stdout.write(`\x1B[${x};${y}f`)
+
 const main = () => {
     chalk.level = 1
     console.log(`Chalk level: ${chalk.level}`)
 
-    let frame = loadFrame(0)
-    printImage(frame)
+    let frames = [...new Array(10).keys()]
+        .map((_,i) => i)
+        .map(i => {
+            console.log(`Loading frame ${i}`,)
+            return loadFrame(i)
+        })
+
+    for(let i = 0; true; i = (i+1) % 10) {
+        cup(0,0)
+        printImage(frames[i])
+    }
 }
 
 main()

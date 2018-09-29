@@ -43,19 +43,19 @@ const compileFrame = term => frame => {
         .join('')
 }
 
+const animate = (frames, i, rest) => {
+    term.moveTo(1,1)
+    term(frames[i % frames.length])
+    setTimeout(animate, rest, frames, i+1, rest)
+}
+
 const main = () => {
     let frames = range(10)
-        .map(i => {
-            console.log(`Loading frame ${i}`)
-            return loadFrame(i)
-        })
+        .map(loadFrame)
         .map(compileFrame(term))
 
     term.fullscreen()
-    for(let i = 0; true; i = (i+1) % 10) {
-        term.moveTo(1,1)
-        term(frames[i])
-    }
+    animate(frames, 0, 1000/30)
 }
 
 main()

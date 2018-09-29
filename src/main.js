@@ -32,7 +32,6 @@ const loadFrame = id => {
 
 const compileFrame = term => frame => {
     let aspect = term.width / term.height / 2
-    let halfPixel = 0.5 / term.height / 2
 
     return range(term.width * term.height)
         .map(i => [i % term.width, i / term.width | 0])
@@ -49,12 +48,22 @@ const animate = (frames, i, rest) => {
     setTimeout(animate, rest, frames, i+1, rest)
 }
 
+const terminateOnKey = name => {
+    if(name == 'CTRL_C' || name == 'ESCAPE') {
+        term.styleReset()
+        process.exit(0)
+    }
+}
+
 const main = () => {
     let frames = range(10)
         .map(loadFrame)
         .map(compileFrame(term))
 
     term.fullscreen()
+    term.grabInput(true)
+    term.on('key', terminateOnKey)
+    
     animate(frames, 0, 1000/30)
 }
 

@@ -4,6 +4,12 @@ const fs = require('fs')
 
 const term = termkit.terminal
 
+const range = n => 
+    [...Array(n).keys()]
+
+const quantize = q => v => 
+    ((v / q) | 0) * q
+
 const loadFrame = id => {
     let filename = `frames/${id}.jpg`
     let imageData = fs.readFileSync(filename)
@@ -24,46 +30,31 @@ const loadFrame = id => {
     return image
 }
 
-const printImage = image => {
-    for(let y = 0; y < image.height; y++) {
-        for(let x = 0; x < image.width; x++) {
-            let color = image.get(x,y)
-                .map(v => ((v/8)|0) * 8)
+const compileFrame = term => frame => {
+    let aspect = term.width / term.height / 2
+    let halfPixel = 0.5 / term.height / 2
 
-            term.bgColorRgb(...color)('  ')
-        }
-
-        term('\n')
-    }
+    return range(term.width * term.height)
+        .map(i => [i % term.width, i / term.width | 0])
+        .map(([x,y]) => [x / term.width, y / term.height])
+        .map(([u,v]) => [(u - 0.25) * aspect, v])
+        .map(uv => frame.sample(...uv).map(quantize(32)))
+        .map(color => term.str.bgColorRgb(...color, ' '))
+        .join('')
 }
 
 const main = () => {
-    let frames = [...new Array(10).keys()]
-        .map((_,i) => i)
+    let frames = range(10)
         .map(i => {
-            console.log(`Loading frame ${i}`,)
+            console.log(`Loading frame ${i}`)
             return loadFrame(i)
         })
+        .map(compileFrame(term))
 
     term.fullscreen()
     for(let i = 0; true; i = (i+1) % 10) {
         term.moveTo(1,1)
-        
-        let frame = frames[i];
-        let aspect = term.width / term.height / 2;
-
-        for(let y = 0; y < term.height; ++y) {
-            for(let x = 0; x < term.width; ++x) {
-                let uv = [x/term.width, y/term.height]
-                uv[0] = (uv[0] - 0.25) * aspect
-                let color = frame.sample(...uv)
-                    .map(v => ((v/32)|0) * 32)
-
-                term.bgColorRgb(...color)(' ')
-            }
-        }
-
-        term.styleReset()
+        term(frames[i])
     }
 }
 
